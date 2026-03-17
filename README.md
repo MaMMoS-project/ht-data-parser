@@ -37,6 +37,8 @@ Dependencies are managed through **`pyproject.toml`**, a **`requirement.txt`** f
 
 # Basic Usage
 
+A Jupyter Notebook **`DataParser.ipynb`** is providing a full detail on how to use the ht-data-parser, a basic usage has also been written down below:
+
 Each measurement is represented by a **`Meas` class** containing:
 
 * `metadata` – instrument metadata
