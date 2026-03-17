@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ht-data-parser"
+version = "0.1.0"
+description = "High-throughput data parsers and analysis tools"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+authors = [
+    {name = "William Rigaut", email = "william.rigaut@neel.cnrs.fr"}
+]
+
+dependencies = [
+    "h5py",
+    "mammos_entity",
+    "mammos_units",
+    "plotly",
+    "numpy",
+    "pandas",
+    "ipykernel",
+    "openpyxl",
+    "nbformat>=4.2.0",
+    "fabio",
+    "tqdm"
+]
+
+[project.urls]
+Homepage = "https://github.com/MaMMoS-project/ht-data-parser"
+Repository = "https://github.com/MaMMoS-project/ht-data-parser"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
