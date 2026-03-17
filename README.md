@@ -102,11 +102,3 @@ scan.to_hdf5("dataset.hdf5")
 The resulting structure follows conventions inspired by the **NeXus scientific data format**:
 
 https://www.nexusformat.org/
-
----
-
-# Author
-
-**William Rigaut**
-Institut Néel
-March 2026
