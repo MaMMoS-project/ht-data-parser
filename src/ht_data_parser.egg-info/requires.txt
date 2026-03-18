@@ -1,0 +1,11 @@
+h5py
+mammos_entity
+mammos_units
+plotly
+numpy
+pandas
+ipykernel
+openpyxl
+nbformat>=4.2.0
+fabio
+tqdm

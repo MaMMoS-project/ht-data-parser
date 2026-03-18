@@ -51,7 +51,8 @@ class BaseMeasurement(ABC):
         hdf5_path : Path or str
             Path to the HDF5 file.
         group_name : str, optional
-            Name of the group in the HDF5 file. If not provided, uses the point ID if available, otherwise uses the stem of the path.
+            Name of the group in the HDF5 file. If not provided, uses the point ID if available,
+            otherwise uses the stem of the path.
         mode : str, optional
             Mode to open the HDF5 file. Defaults to "w".
 

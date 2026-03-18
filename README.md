@@ -28,10 +28,12 @@ Clone the repository and install in editable mode:
 ```bash
 git clone https://github.com/MaMMoS-project/ht-data-parser.git
 cd ht-data-parser
+python -m venv .venv
+source .venv/bin/activate
 pip install -e .
 ```
 
-Dependencies are managed through **`pyproject.toml`**, a **`requirement.txt`** file is also provided.
+Dependencies are managed through **`pyproject.toml`**, please note that you need to use **Python 3.11** or higher.
 
 ---
 
