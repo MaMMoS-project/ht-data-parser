@@ -19,61 +19,45 @@ class SEMMeas(BaseMeasurement):
 
     def __init__(self, path: pl.Path, **kwargs):
         super().__init__(path)
-
         self.step_x = kwargs.pop("step_x", 5)
         self.step_y = kwargs.pop("step_y", 5)
         self.start_x = kwargs.pop("start_x", -40)
         self.start_y = kwargs.pop("start_y", -40)
-
         self._read()
 
     def _set_positions_from_path(self, filepath):
-        filepath = str(filepath)
-
         pattern = r".*\((\d+),(\d+)\).*"
-        match = re.search(pattern, filepath)
-
+        match = re.search(pattern, str(filepath))
         if not match:
             return
 
         x_idx = int(match.group(1))
         y_idx = int(match.group(2))
-        x_pos = -((x_idx - 1) * self.step_x + self.start_x)
-        y_pos = (y_idx - 1) * self.step_y + self.start_y
 
         self.index_x = x_idx
         self.index_y = y_idx
-        self.x_position = x_pos * mu.mm
-        self.y_position = y_pos * mu.mm
+        self.x_position = -((x_idx - 1) * self.step_x + self.start_x) * mu.mm
+        self.y_position = ((y_idx - 1) * self.step_y + self.start_y) * mu.mm
 
     def _read(self):
-        # Extract wafer position from filename
         self._set_positions_from_path(self.path)
 
-        # Load PNG image
         img = Image.open(self.path)
         img_array = np.array(img)
 
-        # Convert RGB grayscale to single channel
+        # SEM images are saved as 3-channel grayscale — keep only one channel
         if img_array.ndim == 3 and img_array.shape[2] == 3:
             img_array = img_array[..., 0]
 
-        # Store image
-        # self.data = {"Image": me.Entity("SEMImage", img_array)} # Using mammos_entity, but SEMImage is not defined yet
+        # TODO: switch to me.Entity("SEMImage", ...) once ontology is available
         self.data = {"Image": img_array}
-
-        # No metadata is present in the image itself
         self.metadata = {}
-
-        # No results are present
         self.results = {}
 
     def _add_traces(self, fig):
-        image = self.data["Image"].astype(float)
-
         fig.add_trace(
             go.Heatmap(
-                z=image,
+                z=self.data["Image"].astype(float),
                 colorscale="Gray",
                 showscale=False,
             )

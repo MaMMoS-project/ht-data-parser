@@ -141,7 +141,7 @@ class BaseMeasurement(ABC):
         # Decide how to write
         if isinstance(data_to_store, np.ndarray) and compress:
             dset = h5parent.create_dataset(
-                key, data=data_to_store, compression="gzip", compression_opts=4
+                key, data=data_to_store, compression="gzip", compression_opts=1
             )
         else:
             try:

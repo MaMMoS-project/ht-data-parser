@@ -17,3 +17,4 @@ dist/
 .venv
 DataParser_dev.ipynb
 *.hdf5
+data/

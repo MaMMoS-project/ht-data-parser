@@ -10,12 +10,42 @@ import time
 
 
 class HTMeasurement(ABC):
-    def __init__(self):
-        self.measurements = []
+    MEASUREMENT_CLASS = None
+    FILE_EXTENSION = None
 
-    @abstractmethod
-    def _load_measurements(self):
+    def __init__(self, folder_path):
+        self.measurements = []
+        self.folder_path = Path(folder_path)
+        self._load_measurements()
+        self._post_load()
+
+    def _post_load(self):
         pass
+
+    def _is_within_bounds(self, meas, max_single=40, max_sum=60):
+        if meas.x_position is None or meas.y_position is None:
+            return False
+        x, y = abs(meas.x_position.value), abs(meas.y_position.value)
+
+        return x <= max_single and y <= max_single and (x + y) <= max_sum
+
+    def _load_measurements(self):
+        """
+        Default loader: glob FILE_EXTENSION, instantiate MEASUREMENT_CLASS,
+        filter by position.
+        """
+        if self.FILE_EXTENSION is None or self.MEASUREMENT_CLASS is None:
+            raise NotImplementedError("Define FILE_EXTENSION and MEASUREMENT_CLASS.")
+
+        files = sorted(self.folder_path.glob(f"*{self.FILE_EXTENSION}"))
+        for f in tqdm.tqdm(files):
+            try:
+                meas = self.MEASUREMENT_CLASS(f)
+            except Exception as e:
+                print(f"Skipping {f.name}: {e}")
+                continue
+            if self._is_within_bounds(meas):
+                self.measurements.append(meas)
 
     def add_results(self, show_progress=True):
         iterator = self.measurements
@@ -103,7 +133,7 @@ class HTMeasurement(ABC):
                     scan_grp.attrs["HT_type"] = "xrd"
                     scan_grp.attrs["instrument"] = "Rigaku Smartlab"
 
-            for meas in self.measurements:
+            for meas in tqdm.tqdm(self.measurements):
                 if (
                     hasattr(meas, "x_position")
                     and hasattr(meas, "y_position")
@@ -158,6 +188,7 @@ class HTMeasurement(ABC):
                     raise ValueError("Scan class must define MEASUREMENT_CLASS.")
 
                 if meas_grp.attrs.get("type") != meas_type.__name__:
+                    continue
                     raise ValueError(
                         f"Unexpected measurement type '{meas_grp.attrs.get('type')}' "
                         f"in group {meas_name}"
