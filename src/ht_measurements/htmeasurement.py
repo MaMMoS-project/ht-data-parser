@@ -161,7 +161,7 @@ class HTMeasurement(ABC):
                     meas._write_results(meas_grp)
 
     @classmethod
-    def from_hdf5(cls, hdf5_path, scan_group=None):
+    def from_hdf5(cls, hdf5_path, scan_group=None, load_2d_images=True):
         hdf5_path = Path(hdf5_path)
 
         with h5py.File(hdf5_path, "r") as h5file:
@@ -194,7 +194,11 @@ class HTMeasurement(ABC):
                         f"in group {meas_name}"
                     )
 
-                meas = meas_type.from_hdf5(hdf5_path, f"{scan_group}/{meas_name}")
+                meas = meas_type.from_hdf5(
+                    hdf5_path,
+                    f"{scan_group}/{meas_name}",
+                    load_2d_images=load_2d_images,
+                )
                 scan_obj.measurements.append(meas)
 
         return scan_obj

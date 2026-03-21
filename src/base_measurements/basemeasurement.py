@@ -214,7 +214,7 @@ class BaseMeasurement(ABC):
         self._write_dict(results_grp, self.results)
 
     @classmethod
-    def from_hdf5(cls, hdf5_path, group_name):
+    def from_hdf5(cls, hdf5_path, group_name, load_2d_images=True):
         """
         Reads an HDF5 file into a BaseMeasurement object.
 
@@ -294,6 +294,10 @@ class BaseMeasurement(ABC):
             obj.data = {}
             if "measurement" in grp:
                 for key in grp["measurement"]:
+                    # Skipping large detector image if requested
+                    if not load_2d_images and key == "2Dimage":
+                        continue
+
                     if isinstance(grp["measurement"][key], h5py.Group):
                         obj.data[key] = _read_group(grp["measurement"][key])
                     else:
