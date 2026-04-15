@@ -138,7 +138,7 @@ class Film:
     # ------------------------------------------------------------------
     # Loading full hdf5 file
     def _load(self, load_2d_images: bool) -> None:
-        with h5py.File(self.hdf5_path, "r") as h5:
+        with h5py.File(self.hdf5_path, "a") as h5:
             for group_name, grp in tqdm.tqdm(h5.items(), desc="Loading Film"):
                 type_name = grp.attrs.get("type")
                 if type_name is None:
