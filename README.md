@@ -51,19 +51,19 @@ Example with **EDX**:
 
 ```python
 import pathlib
-from src.base_measurements.edxmeas import EDXMeas
+from src.measurements.edxmeas import EdxMeas
 
 path = pathlib.Path("Spectrum_(9,9).spx")
 
-edx = EDXMeas(path)
-fig = edx.plot()
+edx_spectrum = EdxMeas(path)
+fig = edx_spectrum.plot()
 fig.show()
 ```
 
 Quantities are stored as **ontology-aware entities**:
 
 ```python
-energy = edx.data["Energy"]
+energy = edx_spectrum.data["Energy"]
 
 energy.value
 energy.unit
@@ -79,19 +79,22 @@ For wafer-scale experiments (~250 positions), the package provides **Scan classe
 Example:
 
 ```python
-from src.ht_measurements.edxscan import EDXScan
+from src.scans.edxscan import EdxScan
 
-scan = EDXScan("EDX_folder")
-scan.heatmap("results.Nd.AtomPercent")
+edx_scan = EdxScan("EDX_folder")
+edx_scan.heatmap("results.Nd.AtomPercent")
+
+edx_scan.list_scalar_quantities() # List all values that can be plotted
 ```
 
 Supported scan classes:
 
-* `EDXScan`
-* `MOKEScan`
-* `SMARTLABScan`
+* `EdxScan`
+* `MokeScan`
+* `SmartlabScan`
+* `EsrfScan`
 * `ProfilScan`
-* `SEMScan`
+* `SemScan`
 
 ---
 
@@ -100,7 +103,7 @@ Supported scan classes:
 Measurements and scans can be exported to **HDF5**:
 
 ```python
-scan.to_hdf5("dataset.hdf5")
+edx_scan.to_hdf5("dataset.hdf5")
 ```
 
 The resulting structure follows conventions inspired by the **NeXus scientific data format**:
