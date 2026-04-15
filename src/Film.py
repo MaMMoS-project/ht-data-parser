@@ -55,6 +55,11 @@ _NOMAD_DEFINITIONS = {
                     "unit": "A/m",
                     "description": "Coercivity from MOKE measurements",
                 },
+                "thickness": {
+                    "type": "np.float64",
+                    "unit": "nm",
+                    "description": "Thickness from PROFIL measurements",
+                },
                 "annealing_temperature": {
                     "type": "np.float64",
                     "unit": "K",
@@ -476,7 +481,7 @@ class Film:
     ) -> dict[str, Any]:
         """
         Film thickness from ProfilScan results.
-        Key: 'thickness_um'
+        Key: 'thickness'
         """
         for scan in self.profil_scans:
             try:
@@ -484,16 +489,16 @@ class Film:
             except ValueError:
                 continue
 
-            thickness = meas.results.get("thickness")
+            thickness = meas.results.get("measured_thickness")
             if thickness is not None:
                 value = (
                     float(thickness.value)
                     if hasattr(thickness, "value")
                     else float(thickness)
                 )
-                return {"thickness_um": value}
+                return {"thickness": value}
 
-        return {"thickness_um": None}
+        return {"thickness": None}
 
     def _extract_annealing_from_sample(self) -> dict[str, Optional[float]]:
         """
@@ -609,6 +614,7 @@ class Film:
                 coercivity_Am=props.get("coercivity_Am"),
                 phase_fractions=phase_fractions,
                 lattice_parameters=lattice_parameters,
+                thickness=props.get("thickness"),
                 annealing_temperature=annealing_info.get("temperature"),
                 annealing_time=annealing_info.get("time"),
             )
@@ -639,6 +645,7 @@ def _build_nomad_yaml(
     coercivity_Am: Optional[float],
     phase_fractions: Optional[list[dict[str, Any]]],
     lattice_parameters: Optional[list[dict[str, Any]]],
+    thickness: Optional[float],
     annealing_temperature: Optional[float],
     annealing_time: Optional[float],
 ) -> dict:
@@ -656,6 +663,10 @@ def _build_nomad_yaml(
 
     if coercivity_Am is not None:
         data["CoercivityHcExternal"] = float(coercivity_Am)
+
+    if thickness is not None:
+        scaling = 2.25
+        data["thickness"] = float(thickness) * scaling
 
     if annealing_temperature is not None:
         data["annealing_temperature"] = float(annealing_temperature)
