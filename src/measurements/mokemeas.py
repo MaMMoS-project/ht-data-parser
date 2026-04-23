@@ -92,7 +92,11 @@ class MokeMeas(BaseMeas):
             file_path = next(
                 self.path.parent.glob(f"{self.point_id}_x*_y*_{filename_suffix}.txt")
             )
-            raw_data[signal_key] = np.loadtxt(file_path, skiprows=1).T * mu.V
+            raw_data[signal_key] = np.loadtxt(file_path, skiprows=1).T
+            if np.ndim(raw_data[signal_key] < 2):
+                raw_data[signal_key] = raw_data[signal_key].reshape(1, -1)
+
+            raw_data[signal_key] = raw_data[signal_key] * mu.V
 
         n_shots = raw_data["magnetization"].shape[0]
         n_points = raw_data["magnetization"].shape[1]

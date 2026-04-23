@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Any
 from abc import ABC
 
 import h5py
@@ -226,14 +226,55 @@ class BaseScan(ABC):
 
     # ------------------------------------------------------------------
     # Plotting section
+    def _colorbar_layout(
+        self,
+        z_min: float = 0,
+        z_max: float = 100,
+        precision: int = 0,
+        title: str = "",
+        prefix: str = "",
+    ) -> dict[str, Any]:
+
+        z_mid = (z_min + z_max) / 2
+        colorbar = dict(
+            title=dict(
+                text=prefix + title + "<br>&nbsp;<br>",
+                font=dict(size=24),
+            ),
+            tickmode="array",
+            tickvals=[
+                z_min,
+                (z_min + z_mid) / 2,
+                z_mid,
+                (z_max + z_mid) / 2,
+                z_max,
+            ],
+            ticktext=[
+                f"{z_min:.{precision}f}",
+                f"{(z_min + z_mid) / 2:.{precision}f}",
+                f"{z_mid:.{precision}f}",
+                f"{(z_max + z_mid) / 2:.{precision}f}",
+                f"{z_max:.{precision}f}",
+            ],
+            tickfont=dict(size=24),
+            ticklen=8,
+            thickness=25,
+        )
+        return colorbar
+
     def heatmap(
         self,
         quantity: str,
         xlim: list[float] = [-42.5, 42.5],
         ylim: list[float] = [-42.5, 42.5],
-    ) -> None:
-        values = self.get_quantity(quantity)
-        values = [v.value if hasattr(v, "value") else v for v in values]
+        precision=1,
+        width=650,
+        height=600,
+        prefix="",
+    ) -> go.Figure:
+
+        quantities = self.get_quantity(quantity)
+        values = [q.value if hasattr(q, "value") else q for q in quantities]
 
         for v in values:
             if np.ndim(v) > 0:
@@ -242,7 +283,7 @@ class BaseScan(ABC):
                     "Heatmap requires scalar quantities."
                 )
 
-        unit = values[0].unit if hasattr(values[0], "unit") else None
+        unit = quantities[0].unit if hasattr(quantities[0], "unit") else ""
         xs = [m.x_position.value for m in self.measurements]
         ys = [m.y_position.value for m in self.measurements]
         x_unique = sorted(set(xs))
@@ -260,8 +301,12 @@ class BaseScan(ABC):
                 y=y_unique,
                 z=z,
                 colorscale="Plasma",
-                colorbar=dict(
-                    title=unit, x=1.05, y=0.5, len=1.0, tickfont=dict(size=20)
+                colorbar=self._colorbar_layout(
+                    z_min=np.nanmin(z.flatten()),
+                    z_max=np.nanmax(z.flatten()),
+                    precision=precision,
+                    title=str(unit),
+                    prefix=prefix,
                 ),
             )
         )
@@ -269,18 +314,26 @@ class BaseScan(ABC):
             title=f"Heatmap of {quantity}",
             xaxis=dict(
                 range=xlim,
-                title="X position (mm)",
-                tickfont=dict(size=20),
-                title_font=dict(size=20),
+                title="X (mm)",
+                tickfont=dict(size=24),
+                title_font=dict(size=24),
+                tickmode="array",
+                tickvals=[-40, -20, 0, 20, 40],
             ),
             yaxis=dict(
                 range=ylim,
+                # scaleanchor="x",
                 scaleratio=1,
-                title="Y position (mm)",
-                tickfont=dict(size=20),
-                title_font=dict(size=20),
+                title="Y (mm)",
+                tickfont=dict(size=24),
+                title_font=dict(size=24),
+                tickmode="array",
+                tickvals=[-40, -20, 0, 20, 40],
             ),
-            width=600,
-            height=600,
+            width=width,
+            height=height,
         )
+
         fig.show()
+
+        return fig

@@ -19,3 +19,4 @@ DataParser_dev.ipynb
 *.hdf5
 data/
 notes.py
+_DataParserDev*
