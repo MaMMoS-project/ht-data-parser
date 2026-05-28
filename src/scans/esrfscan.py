@@ -18,13 +18,14 @@ class EsrfScan(BaseScan):
 
     Expected folder layout:
         folder_path/
-            RAW_DATA/<name>/<name>_0001/<name>.h5
-            PROCESSED_DATA/<name>/<name>_0001/<name>.h5
+            RAW_DATA/<name>/<name>_<index>/<name>.h5
+            PROCESSED_DATA/<name>/<name>_<index>/<name>.h5
     """
 
     MEASUREMENT_CLASS = EsrfMeas
 
-    def __init__(self, folder_path: Path | str) -> None:
+    def __init__(self, folder_path: Path | str, index: str = "0001") -> None:
+        self.index = index
         self._raw_h5_path: Optional[Path] = None
         self._processed_h5_path: Optional[Path] = None
         self._alignment_group_names: list[tuple[str, str]] = []
@@ -33,7 +34,9 @@ class EsrfScan(BaseScan):
     # ------------------------------------------------------------------
     # Loading hdf5 datafile
     def _find_h5_files(self) -> None:
-        tail_path = Path(self.folder_path.name) / f"{self.folder_path.name}_0001"
+        tail_path = (
+            Path(self.folder_path.name) / f"{self.folder_path.name}_{self.index}"
+        )
         processed_dir = self.folder_path / "PROCESSED_DATA" / tail_path
         raw_dir = self.folder_path / "RAW_DATA" / tail_path
 
@@ -112,14 +115,14 @@ class EsrfScan(BaseScan):
     def to_hdf5(
         self,
         hdf5_path: Path | str,
-        dataset_name: Optional[str] = None,
+        scan_group_name: Optional[str] = None,
         mode: str = "a",
         overwrite: bool = False,
     ) -> None:
         """Write the full ESRF scan to an HDF5 file."""
         hdf5_path = Path(hdf5_path)
-        if dataset_name is None:
-            dataset_name = (
+        if scan_group_name is None:
+            scan_group_name = (
                 type(self).__name__.split("Scan")[0].upper()
                 + "_"
                 + self.folder_path.stem
@@ -129,16 +132,16 @@ class EsrfScan(BaseScan):
             h5py.File(hdf5_path, mode) as out_h5,
             h5py.File(self._raw_h5_path, "r") as raw_h5,
         ):
-            if dataset_name in out_h5:
+            if scan_group_name in out_h5:
                 if overwrite:
-                    del out_h5[dataset_name]
+                    del out_h5[scan_group_name]
                 else:
                     print(
-                        f"Scan group '{dataset_name}' already exists. Use overwrite=True to replace."
+                        f"Scan group '{scan_group_name}' already exists. Use overwrite=True to replace."
                     )
                     return
 
-            esrf_grp = out_h5.create_group(dataset_name)
+            esrf_grp = out_h5.create_group(scan_group_name)
             esrf_grp.attrs["type"] = type(self).__name__
             esrf_grp.attrs["HT_type"] = "xrd"
             esrf_grp.attrs["instrument"] = "bm02 esrf"

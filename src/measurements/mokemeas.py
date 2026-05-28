@@ -93,7 +93,7 @@ class MokeMeas(BaseMeas):
                 self.path.parent.glob(f"{self.point_id}_x*_y*_{filename_suffix}.txt")
             )
             raw_data[signal_key] = np.loadtxt(file_path, skiprows=1).T
-            if np.ndim(raw_data[signal_key] < 2):
+            if np.ndim(raw_data[signal_key]) < 2:
                 raw_data[signal_key] = raw_data[signal_key].reshape(1, -1)
 
             raw_data[signal_key] = raw_data[signal_key] * mu.V

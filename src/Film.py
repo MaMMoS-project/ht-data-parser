@@ -16,7 +16,7 @@ from .scans.mokescan import MokeScan
 from .scans.profilscan import ProfilScan
 from .scans.semscan import SemScan
 from .scans.smartlabscan import SmartlabScan
-
+from .plotting.plotmixin import PlotMixin
 
 # Maps 'type' HDF5 attribute to scan class
 _SCAN_REGISTRY: dict[str, type] = {
@@ -113,7 +113,7 @@ _NOMAD_DEFINITIONS = {
 }
 
 
-class Film:
+class Film(PlotMixin):
     """
     Master container for all HT measurements on a single film / wafer.
 
@@ -469,9 +469,12 @@ class Film:
                     if hasattr(coercivity, "value")
                     else float(coercivity)
                 )
-                return {"coercivity_Am": value * 795775}  # T to A/m
+                return {
+                    "coercivity_T": value,
+                    "coercivity_Am": value * 795775,
+                }  # T to A/m
 
-        return {"coercivity_Am": None}
+        return {"coercivity_T": None, "coercivity_Am": None}
 
     def _extract_thickness(
         self,

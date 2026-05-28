@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from typing import Optional, Any
 from abc import ABC
+from pathlib import Path
 
 import h5py
+import tqdm
 import numpy as np
 import mammos_entity as me
 import plotly.graph_objects as go
-from pathlib import Path
-import tqdm
+
+from ..plotting.plotmixin import PlotMixin
 
 
-class BaseScan(ABC):
+class BaseScan(PlotMixin, ABC):
     MEASUREMENT_CLASS = None
     FILE_EXTENSION: Optional[str] = None
 
@@ -36,7 +38,7 @@ class BaseScan(ABC):
             return False
         x = abs(meas.x_position.value)
         y = abs(meas.y_position.value)
-        return x <= max_single and y <= max_single and (x + y) < max_sum
+        return  x <= max_single and y <= max_single and (x + y) < max_sum
 
     def _load_measurements(self) -> None:
         """Default loader: glob FILE_EXTENSION, instantiate MEASUREMENT_CLASS, filter by position."""
@@ -131,16 +133,18 @@ class BaseScan(ABC):
     def to_hdf5(
         self,
         hdf5_path: Path | str,
+        scan_group_name: str = None,
         mode: str = "a",
         overwrite: bool = False,
     ) -> None:
         hdf5_path = Path(hdf5_path)
         with h5py.File(hdf5_path, mode) as h5:
-            scan_group_name = (
-                type(self).__name__.split("Scan")[0].upper()
-                + "_"
-                + self.folder_path.stem
-            )
+            if scan_group_name is None:
+                scan_group_name = (
+                    type(self).__name__.split("Scan")[0].upper()
+                    + "_"
+                    + self.folder_path.stem
+                )
 
             if scan_group_name in h5:
                 if overwrite:
@@ -223,117 +227,3 @@ class BaseScan(ABC):
                 scan_obj.measurements.append(meas)
 
         return scan_obj
-
-    # ------------------------------------------------------------------
-    # Plotting section
-    def _colorbar_layout(
-        self,
-        z_min: float = 0,
-        z_max: float = 100,
-        precision: int = 0,
-        title: str = "",
-        prefix: str = "",
-    ) -> dict[str, Any]:
-
-        z_mid = (z_min + z_max) / 2
-        colorbar = dict(
-            title=dict(
-                text=prefix + title + "<br>&nbsp;<br>",
-                font=dict(size=24),
-            ),
-            tickmode="array",
-            tickvals=[
-                z_min,
-                (z_min + z_mid) / 2,
-                z_mid,
-                (z_max + z_mid) / 2,
-                z_max,
-            ],
-            ticktext=[
-                f"{z_min:.{precision}f}",
-                f"{(z_min + z_mid) / 2:.{precision}f}",
-                f"{z_mid:.{precision}f}",
-                f"{(z_max + z_mid) / 2:.{precision}f}",
-                f"{z_max:.{precision}f}",
-            ],
-            tickfont=dict(size=24),
-            ticklen=8,
-            thickness=25,
-        )
-        return colorbar
-
-    def heatmap(
-        self,
-        quantity: str,
-        xlim: list[float] = [-42.5, 42.5],
-        ylim: list[float] = [-42.5, 42.5],
-        precision=1,
-        width=650,
-        height=600,
-        prefix="",
-    ) -> go.Figure:
-
-        quantities = self.get_quantity(quantity)
-        values = [q.value if hasattr(q, "value") else q for q in quantities]
-
-        for v in values:
-            if np.ndim(v) > 0:
-                raise ValueError(
-                    f"'{quantity}' is not scalar per measurement (shape {np.shape(v)}). "
-                    "Heatmap requires scalar quantities."
-                )
-
-        unit = quantities[0].unit if hasattr(quantities[0], "unit") else ""
-        xs = [m.x_position.value for m in self.measurements]
-        ys = [m.y_position.value for m in self.measurements]
-        x_unique = sorted(set(xs))
-        y_unique = sorted(set(ys))
-        z = np.full((len(y_unique), len(x_unique)), np.nan)
-        x_map = {x: i for i, x in enumerate(x_unique)}
-        y_map = {y: i for i, y in enumerate(y_unique)}
-
-        for x, y, v in zip(xs, ys, values):
-            z[y_map[y], x_map[x]] = v
-
-        fig = go.Figure(
-            data=go.Heatmap(
-                x=x_unique,
-                y=y_unique,
-                z=z,
-                colorscale="Plasma",
-                colorbar=self._colorbar_layout(
-                    z_min=np.nanmin(z.flatten()),
-                    z_max=np.nanmax(z.flatten()),
-                    precision=precision,
-                    title=str(unit),
-                    prefix=prefix,
-                ),
-            )
-        )
-        fig.update_layout(
-            title=f"Heatmap of {quantity}",
-            xaxis=dict(
-                range=xlim,
-                title="X (mm)",
-                tickfont=dict(size=24),
-                title_font=dict(size=24),
-                tickmode="array",
-                tickvals=[-40, -20, 0, 20, 40],
-            ),
-            yaxis=dict(
-                range=ylim,
-                # scaleanchor="x",
-                scaleratio=1,
-                title="Y (mm)",
-                tickfont=dict(size=24),
-                title_font=dict(size=24),
-                tickmode="array",
-                tickvals=[-40, -20, 0, 20, 40],
-            ),
-            width=width,
-            height=height,
-        )
-
-        fig.show()
-
-        return fig
